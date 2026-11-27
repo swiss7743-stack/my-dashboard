@@ -203,6 +203,40 @@ with tab_summary:
         width="stretch",  # 그래프를 화면 폭에 맞춘다
     )
 
+    # 카테고리별 매출 (막대 그래프, 큰 순서) + 전체 매출에서 차지하는 비중(%)
+    st.subheader("카테고리별 매출")
+    category_sales = filtered.groupby("category")["sales"].sum().reset_index()  # 카테고리별로 매출을 더한다
+    category_sales["share"] = category_sales["sales"] / total_sales * 100  # 비중(%) = 카테고리 매출 ÷ 총 매출 × 100
+    max_category_sales = category_sales["sales"].max()  # 카테고리별 매출 중 가장 큰 값
+    st.vega_lite_chart(
+        category_sales,
+        {
+            "mark": {"type": "bar"},  # 막대 그래프
+            "encoding": {
+                "x": {
+                    "field": "category",  # 가로축: 카테고리
+                    "type": "nominal",
+                    "title": "카테고리",
+                    "sort": "-y",  # 매출이 큰 순서로 막대를 놓는다
+                    "axis": {"labelAngle": 0},  # 카테고리 이름을 똑바로 쓴다
+                },
+                "y": {
+                    "field": "sales",  # 세로축: 매출
+                    "type": "quantitative",
+                    "title": "매출(원)",
+                    "scale": {"domain": [0, max_category_sales * 1.1]},  # 0부터 '가장 큰 매출 + 10%'까지
+                    "axis": {"format": ",d"},  # 눈금 숫자에 쉼표를 넣는다
+                },
+                "tooltip": [  # 막대에 마우스를 올리면 매출과 비중이 나온다
+                    {"field": "category", "title": "카테고리"},
+                    {"field": "sales", "title": "매출(원)", "format": ","},
+                    {"field": "share", "title": "비중(%)", "format": ".1f"},  # 소수점 한 자리까지
+                ],
+            },
+        },
+        width="stretch",
+    )
+
     # 요약 탭 맨 아래: 이 화면을 보고 내릴 수 있는 경영 판단
     # (조건에 맞는 데이터가 0건이면 위에서 st.stop()으로 멈추므로, 이 문장은 자동으로 보이지 않는다)
     st.subheader("이 화면으로 내릴 수 있는 경영 판단")
